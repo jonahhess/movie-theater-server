@@ -1,0 +1,12 @@
+fastapi[standard]~=0.141.0
+uvicorn[standard]~=0.52.0
+gunicorn~=23.0.0
+sqlalchemy~=2.0.52
+redis~=8.1.0
+python-dotenv~=1.0.1
+alembic>=1.19.1
+ruff>=0.16.3
+pyjwt>=2.13.0
+passlib[bcrypt]>=1.7.4
+aiomysql>=0.3.2
+cryptography>=50.0.0
