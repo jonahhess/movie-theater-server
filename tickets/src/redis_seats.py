@@ -5,6 +5,7 @@ import os
 from asyncio import CancelledError, sleep
 from typing import Any
 
+from redis import asyncio
 from redis.asyncio import Redis
 from redis.exceptions import RedisError
 
@@ -378,19 +379,26 @@ async def release_acquired_seats(
     return int(deleted_count)
 
 CHANGE_OWNER_SCRIPT = """
-local updated_count = 0
+local updated = {}
+
 local old_user = ARGV[1]
 local new_user = ARGV[2]
 
 for i, key in ipairs(KEYS) do
     local current = redis.call('GET', key)
+
     if current == old_user then
         redis.call('SET', key, new_user, 'KEEPTTL')
-        updated_count = updated_count + 1
+
+        -- key = screening:<screening_id>::<uuid>
+        local screening_id, uuid = string.match(key, "^screening:(.-)::(.+)$")
+
+        table.insert(updated, screening_id)
+        table.insert(updated, uuid)
     end
 end
 
-return updated_count
+return updated
 """
 
 # Scans every screening; track a per-user seat set later if this gets slow.
@@ -400,29 +408,40 @@ async def change_seat_owner(
     new_user_uuid: str,
 ) -> int:
     """
-    Changes the ownership of all seats held by old_user_uuid to new_user_uuid.
-    Returns the number of seats successfully updated.
+    Changes ownership of all seats held by old_user_uuid.
+
+    Returns:
+        Number of seats successfully updated.
     """
-    # 1. Gather all keys matching the old user's seats
     pattern = "screening:*::*"
     keys = [key async for key in redis.scan_iter(match=pattern, count=500)]
+
     if not keys:
         return 0
 
     try:
-        # 2. Execute the ownership change in a single atomic operation
-        updated_count = await redis.eval(
-            CHANGE_OWNER_SCRIPT, 
-            len(keys), 
-            *keys, 
-            old_user_uuid, 
-            new_user_uuid
+        result = await redis.eval(
+            CHANGE_OWNER_SCRIPT,
+            len(keys),
+            *keys,
+            old_user_uuid,
+            new_user_uuid,
         )
-        return int(updated_count)
-        
+            
+        # Lua returns:
+        # [screening_id, uuid, screening_id, uuid, ...]
+
+        owner_tag = generate_owner_tag(new_user_uuid)
+        events = []
+        for i in range(0, len(result), 2):
+            screening_id = str(result[i])
+            events.append(publish_seat_update(redis, screening_id, new_user_uuid, "locked", owner_tag=owner_tag))
+        await asyncio.gather(*events)
+
     except RedisError as e:
         print(f"Failed to execute change_owner script: {e}")
         return 0
+    return len(result) // 2
 
 # --- PURPOSE 2: CACHE WARMING ---
 
