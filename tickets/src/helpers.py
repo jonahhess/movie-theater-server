@@ -22,8 +22,8 @@ async def get_or_create_user_uuid(request: Request, response: Response) -> str:
             value=user_uuid,
             max_age=3600 * 24,  # Expires in 24 hours (adjust as needed for seat holds)
             httponly=True,      # Prevents client-side scripts from stealing the cookie
-            samesite="lax",     # Protects against CSRF attacks
-            secure=False        # Set to True in production over HTTPS
+            samesite="none",     # Protects against CSRF attacks
+            secure=True        # Set to True in production over HTTPS
         )
         print(f"Generated new guest UUID: {user_uuid}")
     else:
