@@ -237,10 +237,10 @@ async def view_screening_seat_map(
         await warm_screening_seats(redis, str(screening_id), seat_ids)
         
     locked_seat_ids = {
-        seat_id
-        async for key in redis.scan_iter(match=f"screening:{screening_id}::*")
-        if await redis.ttl(key) > 0
-        for seat_id in [seat_id_from_key(key)]
+    seat_id_from_key(key)
+    async for key in redis.scan_iter(
+        match=f"screening:{screening_id}::*"
+    )
     }
 
     locked_seat_id_strings = set(locked_seat_ids)
