@@ -42,7 +42,7 @@ services:
       - app-network
 
   redis:
-    image: redis:7-alpine
+    image: redis:8.4-alpine
     restart: always
     # REMOVED public ports "6379:6379" for security.
     volumes:
