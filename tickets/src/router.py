@@ -48,7 +48,7 @@ from tickets.src.token import require_internal_service
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/api/v1/tickets")
+router = APIRouter()
 db_dependency = Depends(get_admin_db)
 redis_dependency = Depends(get_redis)    
 user_uuid_dependency: str = Depends(get_or_create_user_uuid)  

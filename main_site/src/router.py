@@ -16,7 +16,7 @@ from main_site.src.schemas import (
     ScreeningsListResponse,
     )
 
-router = APIRouter(prefix="/api/v1")
+router = APIRouter()
 db_dependency = Depends(get_read_db)
 
 

@@ -17,9 +17,8 @@ from .routes.tickets.router import router as tickets_router
 from .routes.users.router import router as users_router
 from .schemas import AdminLoginRequest, AdminLoginResponse, AdminMeResponse
 
-public_router = APIRouter(prefix="/api/v1/admin")
-protected_router = APIRouter(prefix="/api/v1/admin", 
-                             dependencies=[Depends(require_admin)])
+public_router = APIRouter()
+protected_router = APIRouter(dependencies=[Depends(require_admin)])
 db_dependency = Depends(get_admin_db)
 
 # Public home page prompts for login.
