@@ -122,8 +122,8 @@ async def login(
         value=str(user.id),
         max_age=3600 * 24 * 30,
         httponly=True,
-        samesite="lax",
-        secure=False,
+        samesite="none",
+        secure=True,
     )
 
     return LoginResponse(
@@ -162,8 +162,8 @@ async def register(
         value=str(user.id),
         max_age=3600 * 24 * 30,
         httponly=True,
-        samesite="lax",
-        secure=False,
+        samesite="none",
+        secure=True,
     )
     return LoginResponse(
         user_id=str(user.id),
