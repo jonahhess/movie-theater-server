@@ -5,7 +5,7 @@ import os
 from asyncio import CancelledError, sleep
 from typing import Any
 
-from redis import asyncio
+import asyncio
 from redis.asyncio import Redis
 from redis.exceptions import RedisError
 
