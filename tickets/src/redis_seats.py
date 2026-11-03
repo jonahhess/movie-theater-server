@@ -18,6 +18,19 @@ def generate_owner_tag(user_uuid: str) -> str:
 
 # --- PURPOSE 1: HIGH CONTENTION SEAT RESERVATION (SET NX EX) ---
 
+def screening_id_from_key(key: str) -> str:
+    """
+    Extracts the screening_id from a formatted Redis key string.
+    Example: 'screening:12345::seat:A1' -> '12345'
+             'screening:9876:seat_map'  -> '9876'
+    """
+    # Removes the leading 'screening:' prefix
+    parts = key.split(":", maxsplit=2)
+    if len(parts) > 1 and parts[0] == "screening":
+        return parts[1]
+    
+    raise ValueError(f"Invalid key format: missing 'screening' namespace in '{key}'")
+
 def _seat_map_key(screening_id: str) -> str:
     return f"screening:{screening_id}:seat_map"
 
@@ -418,6 +431,18 @@ async def change_seat_owner(
             old_user_uuid, 
             new_user_uuid
         )
+
+        if updated_count > 0:
+            owner_tag = generate_owner_tag(new_user_uuid)
+            for key in keys:
+                await publish_seat_update(
+                    redis,
+                    screening_id_from_key(key),
+                    _seat_id_from_key(key),
+                    "purchased",  # or custom payload containing the new owner UUID
+                    owner_tag
+                )
+
         return int(updated_count)
         
     except RedisError as e:
